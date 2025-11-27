@@ -1,32 +1,32 @@
 # FPGA_UART-SPI-I2C
-# 🚀 Hardware-Accelerated UART/SPI/I2C Communication Controller  
-**FPGA (Zybo Z7-20) + ARM Processing System (Zynq) Integration**
+# Hardware-Accelerated UART/SPI/I2C Communication Controller  
+FPGA (Zybo Z7-20) + ARM Processing System (Zynq) Integration
 
-This project implements a **hardware-accelerated multi-protocol communication controller (UART, SPI, I2C)** on the Programmable Logic (PL) of the Zynq SoC.  
+This project implements a hardware-accelerated multi-protocol communication controller (UART, SPI, I2C)** on the Programmable Logic (PL) of the Zynq SoC.  
 The controller is fully accessible from the ARM Cortex-A9 Processing System (PS) via AXI4-Lite.  
 Designed for high-speed embedded communication with low CPU load.
 
 
-## 📂 Project Structure
-📦 fpga-comm-controller
-┣ 📁 rtl/
+## Project Structure
+fpga-comm-controller
+┣  rtl/
 ┃ ┣ uart/
 ┃ ┣ spi/
 ┃ ┣ i2c/
 ┃ ┗ axi_wrapper/
-┣ 📁 sim/
+┣  sim/
 ┃ ┣ tb_uart/
 ┃ ┣ tb_spi/
 ┃ ┗ tb_i2c/
-┣ 📁 vivado/
+┣  vivado/
 ┃ ┗ project_files/
-┣ 📁 software/
+┣  software/
 ┃ ┣ baremetal/
 ┃ ┗ linux_app/
-┣ 📁 docs/
+┣  docs/
 ┗ README.md
 
-# 🎯 Project Goals
+# Project Goals
 - Implement **UART, SPI, I2C protocol engines** in FPGA logic  
 - Wrap hardware modules with a **custom AXI4-Lite slave interface**  
 - Connect to **ARM PS (Cortex-A9)** for software configuration  
@@ -34,7 +34,7 @@ Designed for high-speed embedded communication with low CPU load.
 - Compare **PL-based controller vs PS-based driver performance**  
 - Enable scalability for real embedded systems
 
-# 🧩 System Architecture
+# System Architecture
 ARM Cortex-A9 (PS)
 │
 AXI4-Lite
@@ -48,7 +48,7 @@ Programmable Logic (PL)
 │ └─ Interrupt Logic │
 └───────────────────────────────┘
 
-# 🛠️ Hardware Components (RTL)
+# Hardware Components (RTL)
 ### UART Engine
 - Configurable baud rate generator  
 - TX/RX FIFOs (optional)  
@@ -74,7 +74,7 @@ Programmable Logic (PL)
 
 ---
 
-# 📡 Register Map Overview
+# Register Map Overview
 | Address | Name | Description |
 |---------|------|-------------|
 | 0x00 | CTRL | Protocol Select / Enable |
@@ -88,7 +88,7 @@ Programmable Logic (PL)
 
 ---
 
-# 🧪 Simulation (ModelSim / Verilator)
+# Simulation (ModelSim / Verilator)
 Testbenches included:
 
 - `tb_uart.sv`  
@@ -103,7 +103,7 @@ Simulation verifies:
 
 ---
 
-# 🔧 FPGA Build (Vivado)
+# FPGA Build (Vivado)
 ### Steps
 1. Create new Vivado project (`Zybo Z7-20`)  
 2. Import RTL modules  
@@ -115,7 +115,7 @@ Simulation verifies:
 
 ---
 
-# 💻 Software (Vitis)
+# Software (Vitis)
 ### Bare-metal application features:
 - Initialize AXI communication controller  
 - Select protocol (UART/SPI/I2C)  
@@ -129,8 +129,8 @@ Simulation verifies:
 
 ---
 
-# 📊 Performance Metrics
-This project compares **software-only communication (PS)** vs **hardware-accelerated (PL)**.
+# Performance Metrics
+This project compares software-only communication (PS) vs hardware-accelerated (PL)
 
 Metrics:
 - Max throughput  
@@ -142,7 +142,7 @@ Results displayed in `/docs/performance_report.md`.
 
 ---
 
-# 🧷 Future Improvements
+# Future Improvements
 - Add DMA for high-speed transfers  
 - Add I2C slave mode  
 - Support SPI slave mode  
@@ -151,11 +151,11 @@ Results displayed in `/docs/performance_report.md`.
 
 ---
 
-# 📄 License
+# License
 MIT License
 
 ---
 
-# 🙋‍♂️ Author
+# Author
 Lee Seungyun  
 Zybo Z7-20 FPGA / Embedded Systems / Digital Design / Verification  
