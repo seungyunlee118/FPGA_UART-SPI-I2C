@@ -1,6 +1,6 @@
 # FPGA_UART-SPI-I2C
 # Hardware-Accelerated UART/SPI/I2C Communication Controller  
-FPGA (Zybo Z7-20) + ARM Processing System (Zynq) Integration
+**FPGA (Zybo Z7-20) + ARM Processing System (Zynq) Integration**
 
 This project implements a hardware-accelerated multi-protocol communication controller (UART, SPI, I2C)** on the Programmable Logic (PL) of the Zynq SoC.  
 The controller is fully accessible from the ARM Cortex-A9 Processing System (PS) via AXI4-Lite.  
@@ -25,6 +25,7 @@ fpga-comm-controller
 ┃ ┗ linux_app/
 ┣  docs/
 ┗ README.md
+<
 
 # Project Goals
 - Implement **UART, SPI, I2C protocol engines** in FPGA logic  
