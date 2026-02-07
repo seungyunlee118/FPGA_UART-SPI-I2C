@@ -1,4 +1,4 @@
-#Hardware-Accelerated Multi-Protocol Controller (UART, SPI, I2C) on Zynq SoC
+# Hardware-Accelerated Multi-Protocol Controller (UART, SPI, I2C) on Zynq SoC
 Project Overview
 This project implements a Hardware-Accelerated Multi-Protocol Communication Controller supporting UART, SPI, and I2C on the Zybo Z7-20 (Zynq-7000 SoC).
 
@@ -6,7 +6,7 @@ Unlike standard software bit-banging, all communication logic is offloaded to th
 
 ---
 
-#System Architecture & Key Features
+# System Architecture & Key Features
 
 UART Controller:
 - Full-duplex communication (TX/RX).
@@ -44,7 +44,7 @@ Although the physical loopback test was skipped due to the lack of a slave devic
 *(여기에 I2C 파형 사진을 꼭 넣으세요! 물리적 테스트를 대신하는 강력한 증거입니다)*
 
 ---
-#Register Map
+# Register Map
 Protocol,Base Address,Offset,Register Name,Description
 UART,0x43C00000,0x00,DIVISOR,Baud Rate Divisor
 ,,0x04,STATUS,RX Empty / TX Full
@@ -59,7 +59,7 @@ I2C,0x43C20000,0x00,CONTROL,Enable / Start
 ,,0x0C,DATA,SDA Data (TX/RX)
 
 ---
-#Hardware Setup & Pinout
+# Hardware Setup & Pinout
 Protocol,Pmod Header,Pin Description,FPGA Pin,Wiring (Loopback)
 UART,JB Top Row,TX (Transmit),V8 (JB1),Connect to JB2
 ,,RX (Receive),W8 (JB2),Connect to JB1
@@ -68,15 +68,19 @@ SPI,JB Bottom Row,MOSI,Y6 (JB7),Connect to JB8
 I2C,JD Top Row,SCL,T14 (JD1),Requires Slave Device
 ,,SDA,T15 (JD2),Requires Slave Device
 
-#Software Implementation: Robust Driver
-1. The "Retry" Logic (UART/SPI)
+---
+
+# Software Implementation: Robust Driver
+## 1. The "Retry" Logic (UART/SPI)
 To solve hardware latency issues where the CPU reads the FIFO before data arrives, a Reliable Send/Recv Algorithm was implemented. It automatically retries transmission if the initial read returns invalid data (0x00), ensuring 100% success rate without manual intervention.
 
-2. I2C Implementation Note
+## 2. I2C Implementation Note
 The I2C Controller logic and software driver are fully implemented. However, the Loopback Test for I2C was skipped in the final demo.
 - Reason: Unlike UART/SPI, the I2C protocol requires an ACK (Acknowledge) bit from a physical Slave device to complete a transaction.
 - Result: Simple wire loopback (SDA-SDA) is electrically insufficient for I2C protocol verification without a responding slave.
 
-#Test Results
+--
+
+# Test Results
 
 
