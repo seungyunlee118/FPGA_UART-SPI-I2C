@@ -1,7 +1,5 @@
 # Hardware-Accelerated Multi-Protocol Controller (UART, SPI, I2C) on Zynq SoC
 
-![Platform](https://img.shields.io/badge/Platform-Zybo__Z7--20-blue) ![Language](https://img.shields.io/badge/Language-Verilog_%7C_C-green) ![Tools](https://img.shields.io/badge/Tools-Vivado_%7C_Vitis-orange) ![Protocols](https://img.shields.io/badge/Protocols-UART_%7C_SPI_%7C_I2C-red)
-
 ## Project Overview
 This project implements a **Hardware-Accelerated Multi-Protocol Communication Controller** supporting **UART, SPI, and I2C** on the **Zybo Z7-20 (Zynq-7000 SoC)**.
 
@@ -19,7 +17,7 @@ The system integrates three independent protocol engines connected via AXI Inter
 
 ![System Architecture](https://github.com/user-attachments/assets/126f6e3a-6901-448a-b314-a692c3e30c43)
 
-### ✅ Protocol Engines
+### Protocol Engines
 * **UART Controller:**
     * Full-duplex communication (TX/RX).
     * Hardware-fixed baud rate (**9600 bps**) for stability.
@@ -89,7 +87,7 @@ To solve hardware latency issues where the CPU reads the FIFO before data physic
 
 ---
 
-## 🔌 Hardware Setup & Pinout
+## Hardware Setup & Pinout
 Physical connections on the **Zybo Z7-20 Pmod Headers** are required for the Loopback Test.
 
 | Protocol | Pmod Header | Pin # | FPGA Pin | Signal | Wiring for Loopback Test |
