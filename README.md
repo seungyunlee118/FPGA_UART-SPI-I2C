@@ -10,7 +10,6 @@ Unlike standard software bit-banging, all communication logic is offloaded to th
 * **Robustness:** Implementing software drivers that handle hardware latency (FIFO delays).
 * **Modular Design:** Verification from Unit Test (RTL) to System Integration.
 
----
 
 ## System Architecture & Features
 The system integrates three independent protocol engines connected via AXI Interconnect, controlled by the ARM Processor.
@@ -30,7 +29,6 @@ The system integrates three independent protocol engines connected via AXI Inter
     * **7-bit Addressing** support.
     * *Note: Logic fully verified via synthesis & simulation.*
 
----
 
 ## Step 1: Pre-Synthesis Verification (RTL Simulation)
 This project followed a strict **Bottom-Up Design Methodology**. Before bitstream generation, all protocol engines were rigorously verified using **Vivado Simulator**.
@@ -49,8 +47,6 @@ Since physical loopback is not possible for I2C (requires ACK from slave), the l
 * Verified **7-bit Addressing** and **ACK/NACK** handshake logic.
 <img width="100%" alt="I2C Simulation" src="https://github.com/user-attachments/assets/f2f83d0e-7c32-4d52-8a9c-c7cee932cda8" />
 
----
-
 ## Step 2: Component Verification & IP Packaging
 Before integrating with AXI, the core logic components were tested independently to ensure reliability.
 
@@ -61,11 +57,6 @@ Before integrating with AXI, the core logic components were tested independently
 
 ### 2. IP Packaging (Modular Design)
 Each protocol engine was wrapped with an **AXI4-Lite interface** and packaged as a standalone **Custom IP** in Vivado. This allows for reusability in future Zynq-based designs.
-* `myip_uart_1.0`
-* `myip_spi_1.0`
-* `myip_i2c_1.0`
-
----
 
 ## 💻 Step 3: Software Implementation & Driver Testing
 Before the final combined test, each IP was tested individually in **Vitis** to verify register access and driver functionality.
@@ -85,7 +76,6 @@ To solve hardware latency issues where the CPU reads the FIFO before data physic
 * **Status:** Logic & Driver fully implemented.
 * **Constraint:** The physical loopback test for I2C was skipped in the final demo because I2C requires an **ACK bit** from a real physical slave device. Simple wire loopback is electrically insufficient for I2C verification.
 
----
 
 ## Hardware Setup & Pinout
 Physical connections on the **Zybo Z7-20 Pmod Headers** are required for the Loopback Test.
@@ -104,7 +94,6 @@ Physical connections on the **Zybo Z7-20 Pmod Headers** are required for the Loo
 
 > **Note:** **UART RX** is configured with internal `PULLUP` to prevent floating signal errors.
 
----
 
 ## 💾 AXI4-Lite Register Map
 The memory-mapped interface is accessible via the **ARM Cortex-A9 (PS)**.
@@ -124,7 +113,6 @@ The memory-mapped interface is accessible via the **ARM Cortex-A9 (PS)**.
 | | | `0x08` | `I2C_ADDR` | R/W | Slave Address Register |
 | | | `0x0C` | `I2C_DATA` | R/W | Data Register (TX/RX) |
 
----
 
 ## Final Test Results
 The final integration test verified that the hardware (PL) and software (PS) communicate correctly using the robust driver.
@@ -134,7 +122,28 @@ The final integration test verified that the hardware (PL) and software (PS) com
 
 ![Final Result](https://github.com/user-attachments/assets/1ab17375-1576-49f3-b0a3-7f7d30646321)
 
----
+
+## Troubleshooting & Technical Challenges
+During the hardware-software integration phase, several critical issues were encountered. Below are the engineering solutions applied to resolve them.
+
+### 1. The "Ghost Data" Issue (Hardware-Software Timing Mismatch)
+* **Problem:** During the UART loopback test, the CPU (PS) read the RX FIFO immediately after sending data, resulting in a `0x00` read error because the data hadn't physically arrived yet (Latency).
+* **Analysis:** The CPU running at 650MHz is significantly faster than the UART baud rate (9600 bps). The software was polling the FIFO before the hardware could update the status.
+* **Solution:** Implemented a **"Robust Retry Algorithm"** in the C driver.
+    * Instead of a single read, the driver checks for valid data up to 10 times with micro-delays.
+    * This approach successfully synchronized the high-speed CPU with the low-speed peripheral without using blocking interrupts.
+
+### 2. Baud Rate Stability
+* **Problem:** Initial tests showed intermittent framing errors due to potential clock division mismatches in software configuration.
+* **Solution:** **Hardcoded the Divisor** (Values for 9600 bps @ 100MHz clock) directly in the Verilog RTL module.
+    * This ensures that the hardware always wakes up in a known, stable state, eliminating software configuration errors.
+
+### 3. I2C Physical Verification Constraint
+* **Problem:** The I2C protocol requires an acknowledgment (**ACK**) bit from a slave device to complete a transaction. Since a physical slave device was not available for the demo, a simple wire loopback failed (NACK error).
+* **Solution:**
+    * **RTL Simulation:** Verified the I2C Master logic (Start/Stop/ACK) using a testbench simulating a slave response.
+    * **Driver Verification:** Confirmed that the software correctly triggers the I2C engine and handles the NACK status flag as expected.
+
 
 ### Author
 * **Seungyun Lee**
