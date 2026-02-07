@@ -4,7 +4,7 @@ This project implements a Hardware-Accelerated Multi-Protocol Communication Cont
 
 Unlike standard software bit-banging, all communication logic is offloaded to the FPGA Programmable Logic (PL), ensuring precise timing and reduced CPU load. The system is managed by the ARM Cortex-A9 (PS) via a custom AXI4-Lite interface
 
----
+
 
 # System Architecture & Key Features
 
@@ -43,7 +43,7 @@ Although the physical loopback test was skipped due to the lack of a slave devic
 ![I2C Waveform](./docs/sim_i2c.png)
 *(여기에 I2C 파형 사진을 꼭 넣으세요! 물리적 테스트를 대신하는 강력한 증거입니다)*
 
----
+
 # Register Map
 Protocol,Base Address,Offset,Register Name,Description
 UART,0x43C00000,0x00,DIVISOR,Baud Rate Divisor
@@ -58,7 +58,7 @@ I2C,0x43C20000,0x00,CONTROL,Enable / Start
 ,,0x08,ADDR,Slave Address
 ,,0x0C,DATA,SDA Data (TX/RX)
 
----
+
 # Hardware Setup & Pinout
 Protocol,Pmod Header,Pin Description,FPGA Pin,Wiring (Loopback)
 UART,JB Top Row,TX (Transmit),V8 (JB1),Connect to JB2
@@ -68,7 +68,7 @@ SPI,JB Bottom Row,MOSI,Y6 (JB7),Connect to JB8
 I2C,JD Top Row,SCL,T14 (JD1),Requires Slave Device
 ,,SDA,T15 (JD2),Requires Slave Device
 
----
+
 
 # Software Implementation: Robust Driver
 ## 1. The "Retry" Logic (UART/SPI)
@@ -79,7 +79,7 @@ The I2C Controller logic and software driver are fully implemented. However, the
 - Reason: Unlike UART/SPI, the I2C protocol requires an ACK (Acknowledge) bit from a physical Slave device to complete a transaction.
 - Result: Simple wire loopback (SDA-SDA) is electrically insufficient for I2C protocol verification without a responding slave.
 
---
+
 
 # Test Results
 
