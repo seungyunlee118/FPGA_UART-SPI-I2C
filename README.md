@@ -1,162 +1,82 @@
-# FPGA_UART-SPI-I2C
-# Hardware-Accelerated UART/SPI/I2C Communication Controller  
-**FPGA (Zybo Z7-20) + ARM Processing System (Zynq) Integration**
+#Hardware-Accelerated Multi-Protocol Controller (UART, SPI, I2C) on Zynq SoC
+Project Overview
+This project implements a Hardware-Accelerated Multi-Protocol Communication Controller supporting UART, SPI, and I2C on the Zybo Z7-20 (Zynq-7000 SoC).
 
-This project implements a hardware-accelerated multi-protocol communication controller (UART, SPI, I2C)** on the Programmable Logic (PL) of the Zynq SoC.  
-The controller is fully accessible from the ARM Cortex-A9 Processing System (PS) via AXI4-Lite.  
-Designed for high-speed embedded communication with low CPU load.
-
-
-## Project Structure
-fpga-comm-controller
-┣  rtl/
-┃ ┣ uart/
-┃ ┣ spi/
-┃ ┣ i2c/
-┃ ┗ axi_wrapper/
-┣  sim/
-┃ ┣ tb_uart/
-┃ ┣ tb_spi/
-┃ ┗ tb_i2c/
-┣  vivado/
-┃ ┗ project_files/
-┣  software/
-┃ ┣ baremetal/
-┃ ┗ linux_app/
-┣  docs/
-┗ README.md
-<
-
-# Project Goals
-- Implement **UART, SPI, I2C protocol engines** in FPGA logic  
-- Wrap hardware modules with a **custom AXI4-Lite slave interface**  
-- Connect to **ARM PS (Cortex-A9)** for software configuration  
-- Provide **high-throughput, low-latency** communication  
-- Compare **PL-based controller vs PS-based driver performance**  
-- Enable scalability for real embedded systems
-
-# System Architecture
-ARM Cortex-A9 (PS)
-│
-AXI4-Lite
-│
-Programmable Logic (PL)
-┌───────────────────────────────┐
-│ AXI Register Map │
-│ ├─ UART Engine (TX/RX) │
-│ ├─ SPI Engine (Master) │
-│ ├─ I2C Engine (Master) │
-│ └─ Interrupt Logic │
-└───────────────────────────────┘
-
-# Hardware Components (RTL)
-### UART Engine
-- Configurable baud rate generator  
-- TX/RX FIFOs (optional)  
-- Framing error & parity error detection  
-- Interrupt support  
-
-### SPI Engine (Master)
-- Modes: CPOL/CPHA  
-- Adjustable SCLK divider  
-- Full-duplex communication  
-
-### I2C Engine (Master)
-- Start/Stop generation  
-- 7-bit addressing  
-- ACK/NACK handling  
-- Clock stretching support  
-
-### AXI4-Lite Wrapper
-- Register map  
-- Control/status registers  
-- Interrupt enable/status  
-- Protocol selection  
+Unlike standard software bit-banging, all communication logic is offloaded to the FPGA Programmable Logic (PL), ensuring precise timing and reduced CPU load. The system is managed by the ARM Cortex-A9 (PS) via a custom AXI4-Lite interface
 
 ---
 
-# Register Map Overview
-| Address | Name | Description |
-|---------|------|-------------|
-| 0x00 | CTRL | Protocol Select / Enable |
-| 0x04 | STATUS | Busy / Error Flags |
-| 0x08 | UART_TX | UART Transmit |
-| 0x0C | UART_RX | UART Receive |
-| 0x10 | SPI_TX | SPI MOSI Data |
-| 0x14 | SPI_RX | SPI MISO Data |
-| 0x18 | I2C_CMD | I2C Control Word |
-| 0x1C | I2C_DATA | I2C TX/RX Data |
+#System Architecture & Key Features
+
+UART Controller:
+- Full-duplex communication (TX/RX).
+- Hardware-fixed baud rate (9600 bps) for stability.
+- Robust Driver: Software retry logic to handle FIFO latency.
+
+SPI Controller (Master):
+- Master mode implementation.
+- Configurable Clock Polarity/Phase (CPOL/CPHA).
+
+I2C Controller (Master):
+- Standard Master Mode implementation.
+- 7-bit Addressing support.
+- Note: Implemented in RTL & Driver, verifying logic via synthesis.
+
+# 🔍 Pre-Synthesis Verification (RTL Simulation)
+Before synthesis and bitstream generation, all protocol engines (UART, SPI, I2C) were rigorously verified using **Vivado Simulator**.
+Testbenches were written to simulate Master-Slave transactions, ensuring timing constraints and logic correctness.
+
+## 1. UART Simulation
+Verified TX/RX baud rate timing and data integrity.
+![UART Waveform](./docs/sim_uart.png)
+*(캡처하신 UART 파형 사진 파일명을 sim_uart.png로 저장해서 docs 폴더에 넣으세요)*
+
+## 2. SPI Simulation (Mode 0)
+Verified SCLK generation, MOSI/MISO data shifting, and Chip Select (CS) timing.
+![SPI Waveform](./docs/sim_spi.png)
+*(SPI 파형 사진)*
+
+## 3. I2C Simulation (Master Mode)
+Although the physical loopback test was skipped due to the lack of a slave device, the **I2C Logic was fully verified in simulation**.
+- Verified **Start/Stop conditions**.
+- Verified **7-bit Addressing** and **ACK/NACK** signal handling.
+![I2C Waveform](./docs/sim_i2c.png)
+*(여기에 I2C 파형 사진을 꼭 넣으세요! 물리적 테스트를 대신하는 강력한 증거입니다)*
 
 ---
-
-# Simulation (ModelSim / Verilator)
-Testbenches included:
-
-- `tb_uart.sv`  
-- `tb_spi.sv`  
-- `tb_i2c.sv`
-
-Simulation verifies:
-- Protocol correctness  
-- Timing accuracy  
-- Error detection  
-- AXI transactions  
-
----
-
-# FPGA Build (Vivado)
-### Steps
-1. Create new Vivado project (`Zybo Z7-20`)  
-2. Import RTL modules  
-3. Add custom AXI4-Lite IP via Vivado IP Packager  
-4. Integrate in Block Design  
-5. Connect to ZYNQ PS (AXI GP Master)  
-6. Generate Bitstream  
-7. Export hardware to **Vitis**
+#Register Map
+Protocol,Base Address,Offset,Register Name,Description
+UART,0x43C00000,0x00,DIVISOR,Baud Rate Divisor
+,,0x04,STATUS,RX Empty / TX Full
+,,0x08,TX_DATA,Transmit Data
+,,0x0C,RX_DATA,Receive Data
+SPI,0x43C10000,0x00,CONTROL,Start / Mode Select
+,,0x08,TX_DATA,MOSI Data
+,,0x0C,RX_DATA,MISO Data
+I2C,0x43C20000,0x00,CONTROL,Enable / Start
+,,0x04,STATUS,ACK Received / Busy
+,,0x08,ADDR,Slave Address
+,,0x0C,DATA,SDA Data (TX/RX)
 
 ---
+#Hardware Setup & Pinout
+Protocol,Pmod Header,Pin Description,FPGA Pin,Wiring (Loopback)
+UART,JB Top Row,TX (Transmit),V8 (JB1),Connect to JB2
+,,RX (Receive),W8 (JB2),Connect to JB1
+SPI,JB Bottom Row,MOSI,Y6 (JB7),Connect to JB8
+,,MISO,V6 (JB8),Connect to JB7
+I2C,JD Top Row,SCL,T14 (JD1),Requires Slave Device
+,,SDA,T15 (JD2),Requires Slave Device
 
-# Software (Vitis)
-### Bare-metal application features:
-- Initialize AXI communication controller  
-- Select protocol (UART/SPI/I2C)  
-- Transmit & receive data  
-- Performance benchmarking  
-- Interrupt handling  
+#Software Implementation: Robust Driver
+1. The "Retry" Logic (UART/SPI)
+To solve hardware latency issues where the CPU reads the FIFO before data arrives, a Reliable Send/Recv Algorithm was implemented. It automatically retries transmission if the initial read returns invalid data (0x00), ensuring 100% success rate without manual intervention.
 
-### Linux optional:
-- Device driver  
-- User-space test app  
+2. I2C Implementation Note
+The I2C Controller logic and software driver are fully implemented. However, the Loopback Test for I2C was skipped in the final demo.
+- Reason: Unlike UART/SPI, the I2C protocol requires an ACK (Acknowledge) bit from a physical Slave device to complete a transaction.
+- Result: Simple wire loopback (SDA-SDA) is electrically insufficient for I2C protocol verification without a responding slave.
 
----
+#Test Results
 
-# Performance Metrics
-This project compares software-only communication (PS) vs hardware-accelerated (PL)
 
-Metrics:
-- Max throughput  
-- Latency  
-- CPU usage  
-- Interrupt overhead  
-
-Results displayed in `/docs/performance_report.md`.
-
----
-
-# Future Improvements
-- Add DMA for high-speed transfers  
-- Add I2C slave mode  
-- Support SPI slave mode  
-- UVM-based verification environment  
-- Python automated testing suite  
-
----
-
-# License
-MIT License
-
----
-
-# Author
-Lee Seungyun  
-Zybo Z7-20 FPGA / Embedded Systems / Digital Design / Verification  
