@@ -95,7 +95,7 @@ Physical connections on the **Zybo Z7-20 Pmod Headers** are required for the Loo
 > **Note:** **UART RX** is configured with internal `PULLUP` to prevent floating signal errors.
 
 
-## 💾 AXI4-Lite Register Map
+## AXI4-Lite Register Map
 The memory-mapped interface is accessible via the **ARM Cortex-A9 (PS)**.
 
 | Protocol | Base Address | Offset | Register Name | Access | Description |
@@ -123,6 +123,8 @@ The final integration test verified that the hardware (PL) and software (PS) com
 ![Final Result](https://github.com/user-attachments/assets/1ab17375-1576-49f3-b0a3-7f7d30646321)
 
 
+----
+
 ## Troubleshooting & Technical Challenges
 During the hardware-software integration phase, several critical issues were encountered. Below are the engineering solutions applied to resolve them.
 
@@ -144,6 +146,8 @@ During the hardware-software integration phase, several critical issues were enc
     * **RTL Simulation:** Verified the I2C Master logic (Start/Stop/ACK) using a testbench simulating a slave response.
     * **Driver Verification:** Confirmed that the software correctly triggers the I2C engine and handles the NACK status flag as expected.
 
+
+----
 
 ### Author
 * **Seungyun Lee**
