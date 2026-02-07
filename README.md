@@ -82,5 +82,6 @@ The I2C Controller logic and software driver are fully implemented. However, the
 
 
 # Test Results
+![Result](./docs/Result.jpeg)
 
 
