@@ -152,4 +152,3 @@ During the hardware-software integration phase, several critical issues were enc
 ### Author
 * **Seungyun Lee**
 * University of Houston
-* **Project:** Embedded Communication Accelerator on FPGA
