@@ -86,7 +86,7 @@ myip_i2c_1.0
 ## 3. Individual Software Testing (Vitis)
 Before the final combined test, each IP was tested individually in Vitis to verify register access and basic functionality.
 - UART Test: Verified Baud Rate generation and TX/RX loopback.
-  <img width="1032" height="1208" alt="Image" src="https://github.com/user-attachments/assets/d6c7c40c-a83f-4631-aea3-da9e04183b19" />
+  <img width="547" height="640" alt="Image" src="https://github.com/user-attachments/assets/da5e8146-41eb-489c-8e03-eed0a162ef0c" />
 - SPI Test: Verified CPOL/CPHA mode switching and Chip Select (CS) timing.
   <img width="718" height="368" alt="Image" src="https://github.com/user-attachments/assets/5aad89bc-bd98-4e5f-8b12-f0877e6bc6b5" />
   
