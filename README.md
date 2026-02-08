@@ -58,7 +58,7 @@ Before integrating with AXI, the core logic components were tested independently
 ### 2. IP Packaging (Modular Design)
 Each protocol engine was wrapped with an **AXI4-Lite interface** and packaged as a standalone **Custom IP** in Vivado. This allows for reusability in future Zynq-based designs.
 
-## 💻 Step 3: Software Implementation & Driver Testing
+## Step 3: Software Implementation & Driver Testing
 Before the final combined test, each IP was tested individually in **Vitis** to verify register access and driver functionality.
 
 ### 1. Robust Driver Implementation ("Retry" Logic)
