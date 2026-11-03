@@ -32,13 +32,14 @@ module i2c_master (
 
     typedef enum logic [3:0] {
         IDLE, START, ADDR, ACK_ADDR, DATA_TX, ACK_TX,
-        DATA_RX, ACK_RX, NACK_RX, STOP
+        DATA_RX, NACK_RX, STOP
     } state_t;
 
     state_t state;
     
     logic [2:0] bit_cnt;
     logic [7:0] shift_reg;
+    logic       rw_q;       // R/W를 따로 저장 (shift_reg는 ADDR에서 밀려나감)
 
     // ====================================================
     // 1. 타이밍 생성기 (수정됨)
@@ -81,6 +82,7 @@ module i2c_master (
             bit_cnt   <= 3'd7;
             shift_reg <= 0; // [수정]
             rdata     <= 0; // [수정]
+            rw_q      <= 1'b0;
         end else begin
             // IDLE 탈출 로직 (즉시 반응)
             if (state == IDLE) begin
@@ -93,6 +95,7 @@ module i2c_master (
                     busy      <= 1'b1;
                     ack_error <= 1'b0;
                     shift_reg <= {addr, rw};
+                    rw_q      <= rw;
                 end else begin
                     busy <= 1'b0;
                 end
@@ -121,7 +124,7 @@ module i2c_master (
                     end
 
                     ADDR: begin
-                        if (q_cnt == 0) begin 
+                        if (q_cnt == 1) begin // SCL Low 중간에 SDA 변경
                             if (shift_reg[7]) sda_t <= 1'b1; 
                             else              sda_t <= 1'b0; 
                         end
@@ -135,13 +138,13 @@ module i2c_master (
                     end
 
                     ACK_ADDR: begin
-                        if (q_cnt == 0) sda_t <= 1'b1; // Release
+                        if (q_cnt == 1) sda_t <= 1'b1; // Release
                         if (q_cnt == 2) begin 
                             if (sda_i == 1'b1) ack_error <= 1'b1; 
                         end
                         if (q_cnt == 3) begin
                             if (ack_error) state <= STOP; 
-                            else if (shift_reg[0]) begin // Read Mode
+                            else if (rw_q) begin // Read Mode (shift_reg[0]은 7번 shift 후 항상 0)
                                 state <= DATA_RX; 
                                 bit_cnt <= 7;
                             end else begin // Write Mode
@@ -153,7 +156,7 @@ module i2c_master (
                     end
 
                     DATA_TX: begin
-                        if (q_cnt == 0) begin
+                        if (q_cnt == 1) begin
                             if (shift_reg[7]) sda_t <= 1'b1; 
                             else              sda_t <= 1'b0; 
                         end
@@ -167,17 +170,33 @@ module i2c_master (
                     end
 
                     ACK_TX: begin
-                        if (q_cnt == 0) sda_t <= 1'b1; 
+                        if (q_cnt == 1) sda_t <= 1'b1; 
                         if (q_cnt == 2) begin
                              if (sda_i == 1'b1) ack_error <= 1'b1; 
                         end
                         if (q_cnt == 3) state <= STOP; 
                     end
+
+                    DATA_RX: begin
+                        if (q_cnt == 1) sda_t <= 1'b1;                          // Release: Slave가 SDA 구동
+                        if (q_cnt == 2) shift_reg <= {shift_reg[6:0], sda_i};   // SCL High에서 Sample (MSB first)
+                        if (q_cnt == 3) begin
+                            if (bit_cnt == 0) state <= NACK_RX;
+                            else              bit_cnt <= bit_cnt - 1;
+                        end
+                    end
+
+                    NACK_RX: begin
+                        // 1바이트 Read: 마지막 바이트이므로 Master가 NACK (SDA를 놓아둠)
+                        if (q_cnt == 1) sda_t <= 1'b1;
+                        if (q_cnt == 3) begin rdata <= shift_reg; state <= STOP; end
+                    end
                     
                     STOP: begin
-                        if (q_cnt == 0) begin scl_t <= 1'b0; sda_t <= 1'b0; end
-                        if (q_cnt == 1) begin scl_t <= 1'b1; sda_t <= 1'b0; end
-                        if (q_cnt == 2) begin scl_t <= 1'b1; sda_t <= 1'b1; done <= 1'b1; busy <= 1'b0; state <= IDLE; end
+                        // q0: SCL=L, q1: SDA=L, q2: SCL=H, q3: SDA=H (Stop Condition!)
+                        // SCL 생성은 위의 공통 로직이 담당, SDA는 SCL이 Low일 때만 내린다
+                        if (q_cnt == 1) sda_t <= 1'b0;
+                        if (q_cnt == 3) begin sda_t <= 1'b1; done <= 1'b1; busy <= 1'b0; state <= IDLE; end
                     end
                 endcase
             end

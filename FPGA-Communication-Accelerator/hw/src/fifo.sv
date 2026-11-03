@@ -69,7 +69,9 @@ module fifo #(
     // --------------------------------------------------------
     // Status Signals
     // --------------------------------------------------------
-    // Read는 Combinational로 바로 출력 (First Word Fall Through 아님, 일반 모드)
+    // Read는 Combinational로 바로 출력 = Show-ahead (FWFT)
+    // empty가 아니면 head가 이미 rd_data에 보임. rd_en은 "pop"이므로 읽은 다음에 올릴 것
+    // (empty일 때 읽으면 pop 없이 다음에 쓰일 칸의 옛 값이 나옴)
     assign rd_data = mem[rd_ptr[ADDR_WIDTH-1:0]];
 
     // Empty: 포인터가 완전히 같을 때

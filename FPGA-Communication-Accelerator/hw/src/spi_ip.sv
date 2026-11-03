@@ -47,13 +47,12 @@ module spi_ip #
     // ====================================================
     // 레지스터 정의 (Address Map)
     // ====================================================
-    // 0x00: Control Reg (Write Only) - bit 0: Start
-    // 0x04: Status Reg  (Read Only)  - bit 0: Busy, bit 1: Done
+    // 0x00: Control Reg (Write Only) - bit 0: Start (W1S: 1을 쓴 cycle에만 1-cycle pulse, 저장 안 됨, 읽으면 0)
+    // 0x04: Status Reg               - bit 0: Busy (RO), bit 1: Done (Sticky, 1을 쓰면 Clear = W1C)
     // 0x08: TX Data Reg (Write Only) - lower 8 bits
     // 0x0C: RX Data Reg (Read Only)  - lower 8 bits
     
-    logic [31:0] reg0_ctrl;
-    logic [31:0] reg1_status; 
+    logic        spi_done_sticky; // 1-cycle done을 CPU가 polling으로 볼 수 있게 잡아둠
     logic [31:0] reg2_tx;
     logic [31:0] reg3_rx;     
 
@@ -102,8 +101,7 @@ module spi_ip #
         .cs_n    (spi_cs_n)
     );
 
-    // 레지스터와 신호 연결
-    assign spi_start   = reg0_ctrl[0]; 
+    // 레지스터와 신호 연결 (spi_start는 아래 Write Logic에서 1-cycle pulse로 생성)
     assign spi_tx_data = reg2_tx[7:0];
 
     // ====================================================
@@ -114,9 +112,15 @@ module spi_ip #
             axi_awready <= 1'b0;
             axi_wready  <= 1'b0;
             axi_bvalid  <= 1'b0;
-            reg0_ctrl   <= 32'b0;
             reg2_tx     <= 32'b0;
+            spi_start       <= 1'b0;
+            spi_done_sticky <= 1'b0;
         end else begin
+            // Start는 Level이 아니라 Pulse: 기본 0, CTRL에 1을 쓴 cycle에만 1
+            spi_start <= 1'b0;
+            // Done은 Sticky: 끝나면 1로 남아 있다가 CPU가 STATUS bit1에 1을 쓰면 Clear
+            if (spi_done) spi_done_sticky <= 1'b1;
+
             // 1. Write Address Handshake
             if (~axi_awready && s_axi_awvalid && s_axi_wvalid) begin
                 axi_awready <= 1'b1;
@@ -130,7 +134,9 @@ module spi_ip #
             // 2. Write Data Latching
             if (axi_awready && axi_wready) begin
                 case (axi_awaddr[3:2]) 
-                    2'b00: reg0_ctrl <= s_axi_wdata; // 0x00: Control
+                    2'b00: spi_start <= s_axi_wdata[0];          // 0x00: Control (W1S)
+                    2'b01: if (s_axi_wdata[1] && !spi_done)      // 0x04: Done W1C (같은 cycle이면 Set 우선)
+                               spi_done_sticky <= 1'b0;
                     2'b10: reg2_tx   <= s_axi_wdata; // 0x08: TX Data
                     default: ;
                 endcase
@@ -167,8 +173,8 @@ module spi_ip #
                 axi_rvalid <= 1'b1;
                 
                 case (axi_araddr[3:2])
-                    2'b00: axi_rdata <= reg0_ctrl; 
-                    2'b01: axi_rdata <= {30'b0, spi_done, spi_busy}; // 0x04: Status
+                    2'b00: axi_rdata <= 32'b0;                                // 0x00: Start는 저장 안 됨
+                    2'b01: axi_rdata <= {30'b0, spi_done_sticky, spi_busy};   // 0x04: Status
                     2'b10: axi_rdata <= reg2_tx;
                     2'b11: axi_rdata <= {24'b0, spi_rx_data};        // 0x0C: RX Data
                     default: axi_rdata <= 32'b0;

@@ -3,7 +3,7 @@
 module baud_gen (
     input  logic        clk,        // System Clock
     input  logic        reset_n,    // Active Low Reset
-    input  logic [15:0] divisor,    // 분주비 = Sys_Clk / (Baudrate * 16)
+    input  logic [15:0] divisor,    // tick 주기 = divisor + 1 clock → divisor = Sys_Clk / (Baudrate * 16) - 1 (100MHz, 9600 → 650)
     output logic        tick        // 16x Oversampling Tick (1 cycle pulse)
 );
 
