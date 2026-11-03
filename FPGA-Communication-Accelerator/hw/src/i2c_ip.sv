@@ -39,8 +39,8 @@ module i2c_ip #
     // ====================================================
     // 레지스터 정의 (Address Map)
     // ====================================================
-    // 0x00: Control (RW) - Bit0: Start, Bit1: R/W(0:Write, 1:Read)
-    // 0x04: Status  (RO) - Bit0: Busy, Bit1: Done, Bit2: Ack_Error
+    // 0x00: Control (RW) - Bit0: Start (W1S, 1-cycle pulse, 읽으면 0), Bit1: R/W(0:Write, 1:Read)
+    // 0x04: Status       - Bit0: Busy (RO), Bit1: Done (Sticky, 1을 쓰면 Clear = W1C), Bit2: Ack_Error (RO)
     // 0x08: Address (RW) - Slave Address (7-bit)
     // 0x0C: WData   (RW) - 쓸 데이터 (8-bit)
     // 0x10: RData   (RO) - 읽은 데이터 (8-bit)
@@ -48,6 +48,7 @@ module i2c_ip #
     logic [31:0] reg_ctrl;
     logic [31:0] reg_addr;
     logic [31:0] reg_wdata;
+    logic        i2c_done_sticky; // 1-cycle done을 CPU가 polling으로 볼 수 있게 잡아둠
     // Status와 RData는 Read Only라 레지스터 변수 선언 불필요 (Wire로 직결)
 
     // AXI 핸드쉐이크 신호
@@ -119,8 +120,8 @@ module i2c_ip #
         .sda_t     (sda_t)
     );
 
-    // 레지스터 비트 매핑
-    assign i2c_start = reg_ctrl[0]; // Control 레지스터 0번 비트가 Start
+    // 레지스터 비트 매핑: i2c_start는 아래 Write Logic에서 1-cycle pulse로 생성
+    // (Level로 연결하면 0을 다시 쓸 때까지 트랜잭션을 무한 반복함)
 
     // ====================================================
     // [3] AXI Write Logic
@@ -133,7 +134,13 @@ module i2c_ip #
             reg_ctrl    <= 32'b0;
             reg_addr    <= 32'b0;
             reg_wdata   <= 32'b0;
+            i2c_start       <= 1'b0;
+            i2c_done_sticky <= 1'b0;
         end else begin
+            // Start는 Pulse, Done은 Sticky
+            i2c_start <= 1'b0;
+            if (i2c_done) i2c_done_sticky <= 1'b1;
+
             // Address Handshake
             if (~axi_awready && s_axi_awvalid && s_axi_wvalid) begin
                 axi_awready <= 1'b1;
@@ -147,8 +154,12 @@ module i2c_ip #
             // Data Latching
             if (axi_awready && axi_wready) begin
                 case (axi_awaddr[4:2]) // 0x00, 0x04... 4바이트 단위
-                    3'b000: reg_ctrl  <= s_axi_wdata; // 0x00
-                    // 0x04 Status는 Read Only
+                    3'b000: begin                                 // 0x00
+                        reg_ctrl  <= {s_axi_wdata[31:1], 1'b0};   // R/W 등은 저장, Start bit는 저장 안 함
+                        i2c_start <= s_axi_wdata[0];
+                    end
+                    3'b001: if (s_axi_wdata[1] && !i2c_done)      // 0x04: Done W1C (같은 cycle이면 Set 우선)
+                                i2c_done_sticky <= 1'b0;
                     3'b010: reg_addr  <= s_axi_wdata; // 0x08
                     3'b011: reg_wdata <= s_axi_wdata; // 0x0C
                     default: ;
@@ -184,7 +195,7 @@ module i2c_ip #
                 axi_rvalid <= 1'b1;
                 case (axi_araddr[4:2])
                     3'b000: axi_rdata <= reg_ctrl; 
-                    3'b001: axi_rdata <= {29'b0, i2c_ack_err, i2c_done, i2c_busy}; // 0x04 Status
+                    3'b001: axi_rdata <= {29'b0, i2c_ack_err, i2c_done_sticky, i2c_busy}; // 0x04 Status
                     3'b010: axi_rdata <= reg_addr;
                     3'b011: axi_rdata <= reg_wdata;
                     3'b100: axi_rdata <= {24'b0, i2c_rdata_out}; // 0x10 Read Data

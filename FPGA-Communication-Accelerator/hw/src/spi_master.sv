@@ -38,6 +38,7 @@ module spi_master (
     logic [6:0] clk_cnt;    // 분주 카운터 (0~99)
     logic [2:0] bit_cnt;    // 비트 카운터 (7~0)
     logic [7:0] shift_reg;  // 시프트 레지스터
+    logic       miso_q;     // rising edge에서 sample한 MISO (shift_reg와 분리)
 
     // ====================================================
     // 2. 메인 시퀀셜 로직 (always_ff 사용)
@@ -105,7 +106,8 @@ module spi_master (
                     end
                     else if (clk_cnt == CNT_MID) begin
                         sclk <= 1'b1;         // SCLK Rising
-                        shift_reg[0] <= miso; // LSB에 수신 데이터 저장
+                        // shift_reg[0]에는 아직 안 나간 TX bit가 있으므로 따로 저장
+                        miso_q <= miso;
                     end
 
                     // --- Timing 2: Falling Edge (Shift & MOSI Update) ---
@@ -114,10 +116,11 @@ module spi_master (
                         
                         if (bit_cnt > 0) begin
                             bit_cnt <= bit_cnt - 1;
-                            // Shift Left: {기존[6:0], 0}
-                            shift_reg <= {shift_reg[6:0], 1'b0}; 
+                            // Shift Left: 방금 나간 bit 자리로 수신 bit가 들어옴
+                            shift_reg <= {shift_reg[6:0], miso_q};
                             mosi      <= shift_reg[6]; // 다음 비트 출력
                         end else begin
+                            shift_reg <= {shift_reg[6:0], miso_q}; // 마지막 수신 bit
                             state <= DONE_STATE; // 8비트 완료
                         end
                     end
