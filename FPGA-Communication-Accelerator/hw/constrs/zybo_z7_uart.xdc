@@ -2,6 +2,7 @@
 ## [1] UART 
 set_property -dict { PACKAGE_PIN W8    IOSTANDARD LVCMOS33 } [get_ports { uart_tx }]; # JB2
 set_property -dict { PACKAGE_PIN U7    IOSTANDARD LVCMOS33 } [get_ports { uart_rx }]; # JB3
+set_property PULLUP true [get_ports { uart_rx }]; # keep RX idle-high if the wire is unplugged (no false start bits)
 
 
 ## [2] SPI 
